@@ -3,6 +3,8 @@ package io.github.restioson.koth.game;
 import io.github.restioson.koth.game.map.KothMap;
 import io.github.restioson.koth.game.map.KothMapBuilder;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -47,6 +49,7 @@ public class KothWaiting {
         }
 
         RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+                .setDimensionType(RegistryKey.of(RegistryKeys.DIMENSION_TYPE, config.dimension()))
                 .setGenerator(map.asGenerator(context.server()));
 
         return context.openWithWorld(worldConfig, (activity, world) -> {
