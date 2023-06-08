@@ -2,9 +2,11 @@ package io.github.restioson.koth.game;
 
 import io.github.restioson.koth.game.map.KothMap;
 import io.github.restioson.koth.game.map.KothMapBuilder;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageType;
+import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -84,7 +86,7 @@ public class KothWaiting {
     }
 
     private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float value) {
-        if (source.isFire()) {
+        if (source.isIn(DamageTypeTags.IS_FIRE)) {
             this.spawnPlayer(player);
         }
 
