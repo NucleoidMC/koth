@@ -11,6 +11,7 @@
     "spawn_angle": -100,
     "time": 18000
   },
+  "dimension": "koth:outer_space",
   "players": {
     "min": 2,
     "max": 100
