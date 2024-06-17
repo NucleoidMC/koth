@@ -4,8 +4,12 @@
     "id": "minecraft:stick", "Count": 1,
     "Enchantments": [{"id": "minecraft:knockback", "lvl": 2}]
   },
-  "short_name": "gameType.koth.koth.short",
-  "description": "gameType.koth.koth.desc",
+  "short_name": {
+      "translate": "gameType.koth.koth.short"
+  },
+  "description": {
+      "translate": "gameType.koth.koth.desc",
+  },
   "map": {
     "id": "koth:space",
     "spawn_angle": -100,
