@@ -3,7 +3,7 @@ package io.github.restioson.koth.game;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import xyz.nucleoid.fantasy.Fantasy;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 
@@ -25,7 +25,7 @@ public record KothConfig(
             WaitingLobbyConfig.CODEC.fieldOf("players").forGetter(KothConfig::players),
             MapConfig.CODEC.fieldOf("map").forGetter(KothConfig::map),
             Codec.INT.optionalFieldOf("time_limit_secs", 0).forGetter(KothConfig::timeLimitSecs),
-            Identifier.CODEC.optionalFieldOf("dimension", Fantasy.DEFAULT_DIM_TYPE.getValue()).forGetter(KothConfig::dimension),
+            Identifier.CODEC.optionalFieldOf("dimension", Fantasy.DEFAULT_DIM_TYPE.identifier()).forGetter(KothConfig::dimension),
             Codec.INT.optionalFieldOf("first_to", 1).forGetter(KothConfig::firstTo),
             Codec.BOOL.optionalFieldOf("winner_takes_all", false).forGetter(KothConfig::winnerTakesAll),
             Codec.BOOL.optionalFieldOf("has_stick", false).forGetter(KothConfig::hasStick),

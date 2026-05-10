@@ -3,13 +3,6 @@ package io.github.restioson.koth.game;
 import com.google.common.collect.ImmutableSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.network.packet.s2c.play.PositionFlag;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
 import xyz.nucleoid.plasmid.api.game.player.PlayerSet;
 
@@ -17,13 +10,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Relative;
+import net.minecraft.world.phys.Vec3;
 
 public class KothStageManager {
     private final KothConfig config;
     private long closeTime = -1;
     public long finishTime = -1;
     private long startTime = -1;
-    public final Object2ObjectMap<ServerPlayerEntity, FrozenPlayer> frozen;
+    public final Object2ObjectMap<ServerPlayer, FrozenPlayer> frozen;
 
     public KothStageManager(KothConfig config) {
         this.config = config;
@@ -67,10 +67,10 @@ public class KothStageManager {
             lines.add("Right-click with your feather to leap forwards.");
         }
 
-        for (ServerPlayerEntity player : space.getPlayers()) {
+        for (ServerPlayer player : space.getPlayers()) {
             for (String line : lines) {
-                Text text = Text.literal(line).formatted(Formatting.GOLD);
-                player.sendMessage(text, false);
+                Component text = Component.literal(line).withStyle(ChatFormatting.GOLD);
+                player.sendSystemMessage(text, false);
             }
         }
 
@@ -105,7 +105,7 @@ public class KothStageManager {
         boolean noPlayers = space.getPlayers().size() == 0;
         if (this.config.deathmatch()) {
             int remainingPlayers = 0;
-            for (ServerPlayerEntity player : space.getPlayers()) {
+            for (ServerPlayer player : space.getPlayers()) {
                 if (!player.isSpectator()) {
                     remainingPlayers++;
                 }
@@ -136,7 +136,7 @@ public class KothStageManager {
         float sec_f = (this.startTime - time) / 20.0f;
 
         if (sec_f > 1) {
-            for (ServerPlayerEntity player : space.getPlayers()) {
+            for (ServerPlayer player : space.getPlayers()) {
                 if (player.isSpectator()) {
                     continue;
                 }
@@ -144,7 +144,7 @@ public class KothStageManager {
                 FrozenPlayer state = this.frozen.computeIfAbsent(player, p -> new FrozenPlayer());
 
                 if (state.lastPos == null) {
-                    state.lastPos = player.getPos();
+                    state.lastPos = player.position();
                 }
 
                 double destX = state.lastPos.x;
@@ -152,10 +152,10 @@ public class KothStageManager {
                 double destZ = state.lastPos.z;
 
                 // Set X and Y as relative so it will send 0 change when we pass yaw (yaw - yaw = 0) and pitch
-                Set<PositionFlag> flags = ImmutableSet.of(PositionFlag.X_ROT, PositionFlag.Y_ROT);
+                Set<Relative> flags = ImmutableSet.of(Relative.X_ROT, Relative.Y_ROT);
 
                 // Teleport without changing the pitch and yaw
-                player.teleport(player.getServerWorld(), destX, destY, destZ, flags, 0, 0, false);
+                player.teleportTo(player.level(), destX, destY, destZ, flags, 0, 0, false);
             }
         }
 
@@ -164,11 +164,11 @@ public class KothStageManager {
         PlayerSet players = space.getPlayers();
         if ((this.startTime - time) % 20 == 0) {
             if (sec > 0) {
-                players.showTitle(Text.literal(Integer.toString(sec)).formatted(Formatting.BOLD), 20);
-                players.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP.value());
+                players.showTitle(Component.literal(Integer.toString(sec)).withStyle(ChatFormatting.BOLD), 20);
+                players.playSound(SoundEvents.NOTE_BLOCK_HARP.value());
             } else {
-                players.showTitle(Text.literal("Go!").formatted(Formatting.BOLD), 20);
-                players.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP.value(), SoundCategory.PLAYERS, 1.0F, 2.0F);
+                players.showTitle(Component.literal("Go!").withStyle(ChatFormatting.BOLD), 20);
+                players.playSound(SoundEvents.NOTE_BLOCK_HARP.value(), SoundSource.PLAYERS, 1.0F, 2.0F);
             }
         }
 
@@ -176,7 +176,7 @@ public class KothStageManager {
     }
 
     public static class FrozenPlayer {
-        public Vec3d lastPos;
+        public Vec3 lastPos;
     }
 
     public enum TickResult {

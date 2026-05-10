@@ -3,14 +3,6 @@ package io.github.restioson.koth.game;
 import io.github.restioson.koth.game.map.KothMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
@@ -19,79 +11,87 @@ import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 public class KothSpawnLogic {
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final KothMap map;
     private final Map<BlockBounds, LongList> spawnPositionsMap;
 
-    public KothSpawnLogic(ServerWorld world, KothMap map) {
+    public KothSpawnLogic(ServerLevel world, KothMap map) {
         this.world = world;
         this.map = map;
         this.spawnPositionsMap = collectSpawnPositions(world, map);
     }
 
-    public JoinAcceptorResult.Teleport acceptPlayer(JoinAcceptor offer, GameMode gameMode, @Nullable KothStageManager stageManager) {
-        return offer.teleport(this.world, this.findSpawnFor(this.map.getSpawn(world.random))).thenRunForEach(player -> {
-                    player.setYaw(this.map.spawnAngle);
+    public JoinAcceptorResult.Teleport acceptPlayer(JoinAcceptor offer, GameType gameMode, @Nullable KothStageManager stageManager) {
+        return offer.teleport(this.world, this.findSpawnFor(this.map.getSpawn(world.getRandom()))).thenRunForEach(player -> {
+                    player.setYRot(this.map.spawnAngle);
                     this.resetPlayer(player, gameMode, stageManager);
                 });
     }
 
-    public void resetAndRespawn(ServerPlayerEntity player, GameMode gameMode, @Nullable KothStageManager stageManager, int index) {
+    public void resetAndRespawn(ServerPlayer player, GameType gameMode, @Nullable KothStageManager stageManager, int index) {
         this.resetAndRespawn(player, gameMode, stageManager, this.map.getSpawn(index));
     }
 
-    public void resetAndRespawnRandomly(ServerPlayerEntity player, GameMode gameMode, @Nullable KothStageManager stageManager) {
+    public void resetAndRespawnRandomly(ServerPlayer player, GameType gameMode, @Nullable KothStageManager stageManager) {
         this.resetAndRespawn(player, gameMode, stageManager, this.map.getSpawn(player.getRandom()));
     }
 
-    private void resetAndRespawn(ServerPlayerEntity player, GameMode gameMode, @Nullable KothStageManager stageManager, BlockBounds bounds) {
-        Vec3d spawn = this.findSpawnFor(bounds);
-        player.teleport(this.world, spawn.x, spawn.y, spawn.z, Set.of(), this.map.spawnAngle, 0.0F, false);
+    private void resetAndRespawn(ServerPlayer player, GameType gameMode, @Nullable KothStageManager stageManager, BlockBounds bounds) {
+        Vec3 spawn = this.findSpawnFor(bounds);
+        player.teleportTo(this.world, spawn.x, spawn.y, spawn.z, Set.of(), this.map.spawnAngle, 0.0F, false);
 
         this.resetPlayer(player, gameMode, stageManager);
     }
 
-    public void resetPlayer(ServerPlayerEntity player, GameMode gameMode, @Nullable KothStageManager stageManager) {
-        player.changeGameMode(gameMode);
-        player.setVelocity(Vec3d.ZERO);
+    public void resetPlayer(ServerPlayer player, GameType gameMode, @Nullable KothStageManager stageManager) {
+        player.setGameMode(gameMode);
+        player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0f;
-        player.setFireTicks(0);
+        player.setRemainingFireTicks(0);
 
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.NIGHT_VISION,
+        player.addEffect(new MobEffectInstance(
+                MobEffects.NIGHT_VISION,
                 -1,
                 1,
                 true,
                 false
         ));
 
-        player.networkHandler.syncWithPlayerPosition();
+        player.connection.resetPosition();
 
         if (stageManager != null) {
             KothStageManager.FrozenPlayer state = stageManager.frozen.computeIfAbsent(player, p -> new KothStageManager.FrozenPlayer());
-            state.lastPos = player.getPos();
+            state.lastPos = player.position();
         }
     }
 
-    public Vec3d findSpawnFor(BlockBounds bounds) {
-        Random random = this.world.getRandom();
+    public Vec3 findSpawnFor(BlockBounds bounds) {
+        RandomSource random = this.world.getRandom();
 
         LongList spawnPositions = this.spawnPositionsMap.get(bounds);
         long packedPos = spawnPositions.getLong(random.nextInt(spawnPositions.size()));
         BlockPos min = bounds.min();
 
-        int x = BlockPos.unpackLongX(packedPos);
-        int z = BlockPos.unpackLongZ(packedPos);
+        int x = BlockPos.getX(packedPos);
+        int z = BlockPos.getZ(packedPos);
 
-        return new Vec3d(x + random.nextDouble(), min.getY(), z + random.nextDouble());
+        return new Vec3(x + random.nextDouble(), min.getY(), z + random.nextDouble());
     }
 
-    private static Map<BlockBounds, LongList> collectSpawnPositions(ServerWorld world, KothMap map) {
+    private static Map<BlockBounds, LongList> collectSpawnPositions(ServerLevel world, KothMap map) {
         Map<BlockBounds, LongList> spawnPositionsMap = new HashMap<>();
 
-        BlockPos.Mutable pos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (BlockBounds spawn : map.spawns) {
             LongList spawnPositions = new LongArrayList(64);
@@ -113,7 +113,7 @@ public class KothSpawnLogic {
             }
 
             if (spawnPositions.isEmpty()) {
-                BlockPos centerBottom = BlockPos.ofFloored(spawn.centerBottom());
+                BlockPos centerBottom = BlockPos.containing(spawn.centerBottom());
                 spawnPositions.add(centerBottom.asLong());
             }
         }

@@ -1,7 +1,7 @@
 package io.github.restioson.koth.game;
 
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.BossEvent;
 import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
 import xyz.nucleoid.plasmid.api.game.common.widget.BossBarWidget;
 
@@ -9,8 +9,8 @@ public final class KothTimerBar {
     private final BossBarWidget bar;
 
     public KothTimerBar(GlobalWidgets widgets) {
-        Text title = Text.literal("Waiting for the game to start...");
-        this.bar = widgets.addBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
+        Component title = Component.literal("Waiting for the game to start...");
+        this.bar = widgets.addBossBar(title, BossEvent.BossBarColor.GREEN, BossEvent.BossBarOverlay.NOTCHED_10);
     }
 
     public void update(long ticksUntilEnd, long totalTicksUntilEnd) {
@@ -22,16 +22,16 @@ public final class KothTimerBar {
 
     public void setOvertime() {
         this.bar.setProgress(1.0f);
-        this.bar.setTitle(Text.literal("Overtime!"));
+        this.bar.setTitle(Component.literal("Overtime!"));
     }
 
-    private Text getText(long ticksUntilEnd) {
+    private Component getText(long ticksUntilEnd) {
         long secondsUntilEnd = ticksUntilEnd / 20;
 
         long minutes = secondsUntilEnd / 60;
         long seconds = secondsUntilEnd % 60;
         String time = String.format("%02d:%02d left", minutes, seconds);
 
-        return Text.literal(time);
+        return Component.literal(time);
     }
 }

@@ -1,14 +1,14 @@
 package io.github.restioson.koth.game.map;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.phys.AABB;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplate;
-import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.level.generator.TemplateChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class KothMap {
     public final int spawnAngle;
     public final BlockBounds bounds;
     public final List<BlockBounds> noPvp;
-    public final Box throne;
+    public final AABB throne;
 
     public KothMap(MapTemplate template, List<BlockBounds> spawns, BlockBounds throne, int spawnAngle) {
         this.template = template;
@@ -43,7 +43,7 @@ public class KothMap {
         return this.spawns.get(index % this.spawns.size());
     }
 
-    public BlockBounds getSpawn(Random random) {
+    public BlockBounds getSpawn(RandomSource random) {
         return Util.getRandom(this.spawns, random);
     }
 }
