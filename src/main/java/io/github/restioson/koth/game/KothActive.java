@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import io.github.restioson.koth.game.map.KothMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.world.entity.EntityTypes;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
@@ -338,7 +339,7 @@ public class KothActive {
         ServerLevel world = this.world;
         long time = world.getGameTime();
 
-        for (Arrow arrow : world.getEntities(EntityType.ARROW, this.gameMap.bounds.asBox(), e -> e.verticalCollisionBelow)) {
+        for (Arrow arrow : world.getEntities(EntityTypes.ARROW, this.gameMap.bounds.asBox(), e -> e.verticalCollisionBelow)) {
             arrow.remove(Entity.RemovalReason.DISCARDED);
         }
 
